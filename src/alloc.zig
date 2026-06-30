@@ -1,5 +1,7 @@
 const mem = @import("mem.zig");
+const types = @import("types.zig");
 const general = @import("general.zig");
+const module = @import("module.zig");
 
 //purpose of module:
 //  Zig removed std.heap.GeneralPurposeAllocator and
@@ -27,7 +29,6 @@ pub const Error = error { OutOfMemory };
 
 const back = std.heap.page_allocator; // TODO: I suspect this will be removed
 var mutex:std.Io.Mutex = .init;
-var stored_io:?std.Io = null;
 
 pub const interface:Allocator = .{
     .ptr = undefined,
@@ -40,8 +41,7 @@ pub const interface:Allocator = .{
 };
 
 //never fails
-pub fn setup(io:std.Io) @import("types.zig").SetupStatus {
-    stored_io = io;
+pub fn setup() types.SetupStatus {
     return .ok;
 }
 
@@ -51,7 +51,7 @@ fn internal_alloc(
     alignment:Alignment,
     ret_addr:usize
 ) ?[*]u8 {
-    if (stored_io) |io| {
+    if (module.io) |io| {
         mutex.lock(io) catch return null;
         defer mutex.unlock(io);
         return back.rawAlloc(len, alignment, ret_addr);
@@ -66,7 +66,7 @@ fn internal_resize(
     new_len:usize,
     ret_addr:usize
 ) bool {
-    if (stored_io) |io| {
+    if (module.io) |io| {
         mutex.lock(io) catch return true; // TODO: probably should handle this
         defer mutex.unlock(io);
         return back.rawResize(memory, alignment, new_len, ret_addr);
@@ -80,7 +80,7 @@ fn internal_free(
     alignment:Alignment,
     ret_addr:usize
 ) void {
-    if (stored_io) |io| {
+    if (module.io) |io| {
         mutex.lock(io) catch return; // TODO: probably should handle this
         defer mutex.unlock(io);
         return back.rawFree(memory, alignment, ret_addr);
@@ -95,7 +95,7 @@ fn internal_remap(
     new_len:usize,
     ret_addr:usize
 ) ?[*]u8 {
-    if (stored_io) |io| {
+    if (module.io) |io| {
         mutex.lock(io) catch return null;
         defer mutex.unlock(io);
         return back.rawRemap(memory, alignment, new_len, ret_addr);

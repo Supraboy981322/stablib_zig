@@ -28,3 +28,22 @@ pub fn absorbTerminator(slice:anytype) blk: {
         else
             slice.ptr[0..slice.len+1];
 }
+
+pub fn reverseInPlace(comptime T:type, slice:[]T) void {
+    var offset:usize = slice.len;
+    for (0..slice.len/2) |i| {
+        defer offset -= 1;
+        swap(T, &slice[i], &slice[offset-1]);
+    }
+}
+pub fn reverse(comptime T:type, slice:[]const T) []const T {
+    var new:[]u8 = @constCast(slice);
+    reverseInPlace(T, new[0..]);
+    return new;
+}
+
+pub fn swap(comptime T:type, one:*T, two:*T) void {
+    const tmp = one.*;
+    one.* = two.*;
+    two.* = tmp;
+}

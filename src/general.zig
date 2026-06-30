@@ -11,3 +11,10 @@ pub inline fn comptimeAssert(passed:bool, comptime msg:[]const u8) void {
 pub fn comptimeAssertMany(conditions:[]const bool, comptime msg:[]const u8) void {
     inline for (conditions) |condition| comptimeAssert(condition, msg);
 }
+
+
+
+pub fn allTrue(conditions:[]const bool) bool {
+    for (conditions) |c| if (!c) return false;
+    return true;
+}

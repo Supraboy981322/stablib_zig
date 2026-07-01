@@ -1,5 +1,6 @@
-const alloc = @import("alloc.zig").interface; // TODO: replace with wrapper
-const general = @import("general.zig");
+const module = @import("module.zig");
+const alloc = module.alloc.interface; // TODO: replace with wrapper
+const general = module.general;
 const assert = general.assert;
 
 pub fn DynamicArray(comptime T:type) type {
@@ -23,6 +24,9 @@ pub fn DynamicArray(comptime T:type) type {
                 .opts = opts,
                 .initial_capacity = capacity,
             };
+        }
+        pub fn deinit(self:*DynArr) void {
+            alloc.free(self.slice);
         }
 
         pub fn append(self:*DynArr, v:T) !void {

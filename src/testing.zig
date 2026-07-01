@@ -1,5 +1,10 @@
-const mem = @import("mem.zig");
-const types = @import("types.zig");
+const module = @import("module.zig");
+const mem = module.mem;
+const types = module.types;
+
+// TODO:
+//  - print (see... somewhere it's around here, I have full notes on it somewhere)
+const print = @import("std").debug.print;
 
 const Matrix = types.Matrix;
 
@@ -7,7 +12,7 @@ pub inline fn expect(passed:bool) !void {
     if (!passed) return error.TestFailed;
 }
 pub fn expectMany(pass_conditions:[]const bool) !void {
-    inline for (pass_conditions) |success| try expect(success);
+    for (pass_conditions) |success| try expect(success);
 }
 
 pub fn expectEqlSlices(comptime T:type, one:[]const T, two:[]const T) !void {
@@ -19,4 +24,14 @@ pub fn expectEqlMatrices(comptime T:type, one:Matrix(T), two:Matrix(T)) !void {
 }
 pub fn expectManyEqlSlices(comptime T:type, slices:Matrix(T)) !void {
     try expect(mem.manyEql(T, slices));
+}
+
+pub fn expectError(err:anyerror, result:anytype) !void {
+    if (result) |_|
+        print("expected error, but succeeded", .{})
+    else |e| {
+        if (e == err) return;
+        print("expected error.{t}, but got error.{t}", .{err, e});
+    }
+    return error.Failed;
 }

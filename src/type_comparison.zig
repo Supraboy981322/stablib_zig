@@ -1,7 +1,8 @@
-const general = @import("general.zig");
-const mem = @import("mem.zig");
-const meta = @import("meta.zig");
-const types = @import("types.zig");
+const module = @import("module.zig");
+const general = module.general;
+const mem = module.mem;
+const meta = module.meta;
+const types = module.types;
 
 const builtin = types.builtin;
 const comptimeAssert = general.comptimeAssert;

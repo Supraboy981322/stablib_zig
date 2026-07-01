@@ -1,5 +1,5 @@
-const DynArr = @import("DynamicArray.zig").DynamicArray;
 const module = @import("module.zig");
+const DynArr = module.types.DynamicArray;
 const testing = @import("testing.zig");
 const mem = @import("mem.zig");
 
@@ -10,8 +10,10 @@ const print = @import("std").debug.print;
 const general = module.general;
 const assert = general.assert;
 const expect = testing.expect;
+const expectMany = testing.expectMany;
 const expectEqlSlices = testing.expectEqlSlices;
 const expectManyEqlSlices = testing.expectManyEqlSlices;
+const expectError = testing.expectError;
 const assertSetup = module.assertSetup;
 
 var is_setup:bool = false;
@@ -41,6 +43,7 @@ test "DynamicArray(...)" {
     assertSetup();
 
     var buf:DynArr(u8) = try .init(0, .{ .growth_multiplier = 2 });
+    defer buf.deinit();
 
     try expect(buf.pop() == null);
 
@@ -62,4 +65,27 @@ test "DynamicArray(...)" {
         })
     );
     try expect(buf.pop() == null);
+}
+
+test "EnumMap(...)" {
+    const Foo = enum { a, b, c, d, e, f, g };
+    var map:module.types.hashmap.EnumMap(Foo, u8) = try .init();
+    defer map.deinit();
+
+    //basic
+    try map.put(.a, 102, .{ .no_clobber = true });
+    try map.put(.b, 103, .{ .no_clobber = true });
+    try expectMany(&.{
+        map.get(.a, .{}).? == 102,
+        map.get(.a, .{ .ptr = true }).?.* == try map.get(.a, .{ .err_if_missing = true }),
+
+        map.get(.b, .{}).? == 103,
+        map.get(.b, .{ .ptr = true }).?.* == try map.get(.b, .{ .err_if_missing = true }),
+
+        map.get(.c, .{}) == null,
+    });
+
+    //errors
+    try expectError(error.Missing, map.get(.c, .{ .err_if_missing = true }));
+    _ = try map.get(.a, .{ .err_if_missing = true });
 }

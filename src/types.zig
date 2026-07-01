@@ -1,8 +1,11 @@
-const meta = @import("meta.zig");
-const general = @import("general.zig");
+const module = @import("module.zig");
+const meta = module.meta;
+const general = module.general;
 
+const assert = general.assert;
 const comptimeAssert = general.comptimeAssert;
 const comptimeAssertMany = general.comptimeAssertMany;
+const expect = module.testing.expect;
 const activeTag = meta.activeTag;
 
 pub const builtin = struct {
@@ -10,7 +13,18 @@ pub const builtin = struct {
     pub const TypeEnum = meta.Tag(Type);
 };
 
-pub const HashMap = @import("hashmap.zig").HashMap;
+pub const hashmap = @import("hashmap.zig");
+pub const HashMap = hashmap.HashMap;
+
+pub const DynamicArray = @import("DynamicArray.zig").DynamicArray;
+
+const Error = @import("error.zig").Error;
+
+pub const compare = @import("type_comparison.zig");
+
+pub const iterators = @import("iterators.zig");
+
+pub const Futex = @import("futex.zig").Futex;
 
 pub const SetupStatus = enum(u1) {
     ok,
@@ -22,7 +36,6 @@ pub fn Matrix(comptime T:type) type {
     return []const []const T;
 }
 
-pub const compare = @import("type_comparison.zig");
 pub const is = compare.loose.is;
 
 pub const atomic = struct {
@@ -48,12 +61,36 @@ pub const atomic = struct {
     }
 
     pub const Mutex = struct {
-        lock_value:atomic.Value(bool),
-        pub const init:Mutex = .{ .thing = .init(false) };
-        // TODO
+        state:atomic.Value(Lock) = .init(.unlocked, null),
+
+        // TODO: can this even be an enum?
+        const Lock = enum(u32) {
+            unlocked = 0b00,
+            locked = 0b01,
+            contended = 0b11,
+        };
+
+        pub const init:Mutex = .{ .thing = .init(false, null) };
+
+        pub fn lock(self:*Mutex) void {
+            if (self.state.get() == .contended)
+                Futex.wait(&self.state, .contended);
+            while (self.state.swap(.contended, .acquire) != .unlocked)
+                Futex.wait(&self.state, .contended);
+        }
+        pub fn unlock(self:*Mutex) void {
+            const state = self.state.swap(.unlocked, .release);
+            assert(state != .unlocked);
+            if (state == .contended) Futex.wake(&self.state, 1);
+        }
+
+        test "atomic.Mutex" {
+            const mut:Mutex = .init;
+            mut.lock();
+        }
     };
-    pub fn Value(comptime T:type) type {
-        return struct {
+    pub fn Value(comptime T:type, comptime atomic_order:?AtomicOrder) type {
+        return extern struct {
             raw:T,
 
             const Self = @This();
@@ -62,8 +99,19 @@ pub const atomic = struct {
                 return .{ .raw = v };
             }
 
-            pub fn set(self:*Self, value:T) void {
-                @atomicStore(T, &self.raw, value, .seq_cst);
+            pub const Order = if (atomic_order) |_| void else AtomicOrder;
+
+            pub fn set(self:*Self, value:T, order:Order) void {
+                const o = if (atomic_order) |o| o else order;
+                @atomicStore(T, &self.raw, value, @enumFromInt(@intFromEnum(o)));
+            }
+            pub fn get(self:*Self, order:Order) T {
+                const o = if (atomic_order) |o| o else order;
+                return @atomicLoad(T, &self.raw, @enumFromInt(@intFromEnum(o)));
+            }
+            pub fn swap(self:*Self, op:T, order:Order) T {
+                const o = if (atomic_order) |o| o else order;
+                return @atomicRmw(T, &self.raw, .Xchg, op, @enumFromInt(@intFromEnum(o)));
             }
         };
     }

@@ -12,5 +12,12 @@ pub const SetupErr = _setup.Error;
 pub const assertSetup = _setup.assertOk;
 
 pub const general = @import("general.zig");
+pub const types = @import("types.zig");
+pub const posix = @import("posix.zig").posix;
+pub const testing = @import("testing.zig");
+pub const meta = @import("meta.zig");
+pub const time = @import("time.zig");
+pub const mem = @import("mem.zig");
+pub const alloc = @import("alloc.zig");
 
 pub const Error = _error.Error;

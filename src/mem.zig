@@ -1,5 +1,6 @@
-const general = @import("general.zig");
-const types = @import("types.zig");
+const module = @import("module.zig");
+const general = module.general;
+const types = module.types;
 
 const Matrix = types.Matrix;
 

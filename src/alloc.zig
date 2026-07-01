@@ -1,7 +1,7 @@
-const mem = @import("mem.zig");
-const types = @import("types.zig");
-const general = @import("general.zig");
 const module = @import("module.zig");
+const mem = module.mem;
+const types = module.types;
+const general = module.general;
 
 //purpose of module:
 //  Zig removed std.heap.GeneralPurposeAllocator and
@@ -27,7 +27,12 @@ pub const Error = error { OutOfMemory };
 
 //a very thin wrapper around heap.page_allocator with a mutex
 
-const back = std.heap.page_allocator; // TODO: I suspect this will be removed
+//const back = std.heap.page_allocator; // TODO: I suspect this will be removed
+const back =
+    if (@import("builtin").mode == .Debug)
+        std.testing.allocator //I don't plan on implementing a debug/testing allocator anytime soon
+    else
+        std.heap.allocator;   //may have to replace this in some way
 var mutex:std.Io.Mutex = .init;
 
 pub const interface:Allocator = .{

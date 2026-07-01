@@ -1,5 +1,5 @@
 const module = @import("module.zig");
-const general = @import("general.zig");
+const general = module.general;
 
 pub const Error = error {
     Allocator

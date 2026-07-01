@@ -1,4 +1,6 @@
-const HashMap = @import("types.zig").HashMap;
+const module = @import("module.zig");
+const HashMap = module.types.HashMap;
+const assert = module.general.assert;
 
 pub const ByteOpts = struct {
     tracking_mode:?TrackingMode = null,
@@ -75,6 +77,9 @@ pub fn ByteIterator(comptime type_opts:ByteOpts) type {
             switch (comptime type_opts.tracking_mode) {
                 .string => unreachable, // TODO: string matching
                 .byte => if (self.tracker.getPtr(self.current)) |b| {
+                    _ = b;
+                    assert(false, "TODO, HashMap.tick_tracker(...)");
+                    unreachable;
                 },
             }
         }

@@ -1,4 +1,5 @@
-const mem = @import("mem.zig");
+const module = @import("module.zig");
+const mem = module.mem;
 
 pub inline fn assert(passed:bool, comptime msg:[]const u8) void {
     if (!passed) @panic("assertion failure\n\t" ++ msg);

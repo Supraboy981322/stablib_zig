@@ -1,13 +1,12 @@
-const types = @import("types.zig");
-const testing = @import("testing.zig");
-const mem = @import("mem.zig");
-const value = @import("value.zig");
+const module = @import("module.zig");
+const types = module.types;
+const testing = module.testing;
+const mem = module.mem;
 
 const Type = types.builtin.Type;
-const mkBuf = value.mkBuf;
 const expect = testing.expect;
-const expectEqualMatrices = testing.expectEqualMatrices;
-const expectEqualSlices = testing.expectEqualSlices;
+const expectEqualMatrices = testing.expectEqlMatrices;
+const expectEqualSlices = testing.expectEqlSlices;
 
 //misc
 pub fn stringToEnum(comptime T:type, name:[]const u8) ?T {
@@ -74,7 +73,7 @@ pub fn fields(comptime T:type) []const FieldType(T) {
 pub fn fieldNames(comptime T:type) [fieldCount(T)][]const u8 {
     return comptime blk: {
         const len = fieldCount(T);
-        var res = mkBuf([]const u8, len, .{});
+        var res = [_][]const u8{undefined} ** len;
         for (fields(T)[0..len], 0..len) |field, i| res[i] = field.name;
         break :blk res;
     };

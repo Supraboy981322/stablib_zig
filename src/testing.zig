@@ -18,7 +18,5 @@ pub fn expectEqlMatrices(comptime T:type, one:Matrix(T), two:Matrix(T)) !void {
     for (0..one.len) |i| try expectEqlSlices(T, one[i], two[i]);
 }
 pub fn expectManyEqlSlices(comptime T:type, slices:Matrix(T)) !void {
-    if (slices.len < 2) return;
-    const one = slices[0];
-    for (slices[1..]) |slice| try expectEqlSlices(T, one, slice);
+    try expect(mem.manyEql(T, slices));
 }

@@ -1,4 +1,7 @@
 const general = @import("general.zig");
+const types = @import("types.zig");
+
+const Matrix = types.Matrix;
 
 const assert = general.assert;
 const comptimeAssert = general.comptimeAssert;
@@ -8,6 +11,27 @@ pub fn eql(comptime T:type, one:[]const T, two:[]const T) bool {
     for (0..one.len) |i| if (one[i] != two[i]) return false;
     return true;
 }
+pub fn manyEql(comptime T:type, slices:Matrix(T)) bool {
+    if (slices.len >= 2)
+        for (slices[1..]) |s|
+            if (!eql(T, s, slices[0])) return false;
+    return true;
+}
+
+//all values in a slice are the same
+//(as opposed to two slices being equal to each other)
+// TODO:
+//  - would it be better to recurse for arbitrary depth of slices of slices?
+pub fn allEql(comptime T:type, slice:[]const T) bool {
+    if (slice.len >= 2)
+        return allEqlTo(T, slice[1..], slice[0]);
+    return true;
+}
+pub fn allEqlTo(comptime T:type, slice:[]const T, to:T) bool {
+    for (slice) |v| if (v != to) return false;
+    return true;
+}
+
 pub fn absorbTerminator(slice:anytype) blk: {
     const T:type = @TypeOf(slice);
     const i = @typeInfo(T);

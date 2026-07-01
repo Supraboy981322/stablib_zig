@@ -1,3 +1,5 @@
+const mem = @import("mem.zig");
+
 pub inline fn assert(passed:bool, comptime msg:[]const u8) void {
     if (!passed) @panic("assertion failure\n\t" ++ msg);
 }
@@ -15,6 +17,5 @@ pub fn comptimeAssertMany(conditions:[]const bool, comptime msg:[]const u8) void
 
 
 pub fn allTrue(conditions:[]const bool) bool {
-    for (conditions) |c| if (!c) return false;
-    return true;
+    return mem.allEqlTo(bool, conditions, true);
 }

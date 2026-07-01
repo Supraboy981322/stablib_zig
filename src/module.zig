@@ -9,5 +9,8 @@ pub var io:?@import("std").Io = null;
 
 pub const setup = _setup.do;
 pub const SetupErr = _setup.Error;
+pub const assertSetup = _setup.assertOk;
+
+pub const general = @import("general.zig");
 
 pub const Error = _error.Error;

@@ -133,6 +133,37 @@ test "fieldNames(), fields(), FieldType(), and fieldCount()" {
 }
 
 
+
+pub fn EnumLazy(comptime field_names:[]const []const u8) type {
+    const len = field_names.len;
+    const Back = MinInt(len);
+    var buf = [_]Back{undefined} ** len;
+    return @Enum(
+        Back,
+        .exhaustive,
+        field_names,
+        mem.mkRange(Back, len, null, &buf)[0..len]
+    );
+}
+
+test EnumLazy {
+    const BaseLine = enum(u2) { foo, bar, baz };
+    const baseline = fieldNames(BaseLine);
+
+    const names = &.{ "foo", "bar", "baz" };
+    const T = EnumLazy(names);
+    const resulting_names = fieldNames(T);
+
+    try expectMany(&.{
+        Tag(T) == Tag(BaseLine),
+        mem.eqlMatrices(u8, &resulting_names, &baseline),
+        fieldCount(T) == fieldCount(BaseLine),
+        mem.manyEql(u2, &.{ &enumInts(T), &enumInts(BaseLine), &.{ 0, 1, 2 } }),
+    });
+}
+
+
+
 pub fn Structure(comptime T:type) type {
     return struct {
         structure:T,

@@ -18,3 +18,19 @@ pub fn toSentinel(str:[]const u8, comptime s:Sentinel, comptime max_len:usize) !
     buf[str.len] = @intFromEnum(s);
     return buf;
 }
+
+
+
+pub fn parseInt(comptime T:type, str:[]const u8) !T {
+    var res:T = 0;
+    for (0..str.len) |i| {
+        const b = str[i];
+        if (!isDigit(b) and b != '_') return error.NotANumber;
+        // TODO: not a very smart way to do this
+        const old = res;
+        res *%= 10;
+        res +%= b - '0';
+        if (old > res) return error.Overflow;
+    }
+    return res;
+}

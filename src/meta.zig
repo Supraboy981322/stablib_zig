@@ -6,8 +6,15 @@ const mem = module.mem;
 
 const Type = types.builtin.Type;
 const expect = testing.expect;
+const expectMany = testing.expectMany;
 const expectEqualMatrices = testing.expectEqlMatrices;
 const expectEqualSlices = testing.expectEqlSlices;
+
+
+
+const Module = @This();
+
+
 
 //misc
 pub fn stringToEnum(comptime T:type, name:[]const u8) ?T {
@@ -123,4 +130,67 @@ test "fieldNames(), fields(), FieldType(), and fieldCount()" {
     };
     const names = fieldNames(Foo);
     try expectEqualMatrices(u8, &names, &.{ "bar", "baz" });
+}
+
+
+pub fn Structure(comptime T:type) type {
+    return struct {
+        structure:T,
+
+        pub const Self = @This();
+        pub const Fields = FieldEnum(T);
+        const fields = Module.fields(T);
+
+        pub fn init(default:T) Self {
+            return .{ .structure = default };
+        }
+
+
+        pub fn Field(comptime field:Fields) type {
+            inline for (Self.fields) |f|
+                if (field == stringToEnum(Fields, f.name).?)
+                    return f.type;
+            unreachable;
+        }
+
+        pub fn set(self:*Self, comptime field:Fields, value:Field(field)) void {
+            inline for (Self.fields) |f|
+                if (field == comptime stringToEnum(Fields, f.name).?) {
+                    @field(self.structure, f.name) = value;
+                    return;
+                };
+            unreachable;
+        }
+        pub fn get(self:*Self, comptime field:Fields) Field(field) {
+            inline for (Self.fields) |f|
+                if (field == comptime stringToEnum(Fields, f.name).?)
+                    return @field(self.structure, f.name);
+            unreachable;
+        }
+    };
+}
+test Structure {
+    const T = struct {
+        a:usize,
+        b:[]const u8,
+        c:void,
+    };
+
+    var s:Structure(T) = .init(.{
+        .a = 83,
+        .b = "foo",
+        .c = {},
+    });
+    try expectMany(&.{
+        s.get(.a) == 83,
+        mem.eql(u8, s.get(.b), "foo"),
+        s.get(.c) == {},
+    });
+
+    s.set(.b, "bar baz");
+    try expectMany(&.{
+        s.get(.a) == 83,
+        mem.eql(u8, s.get(.b), "bar baz"),
+        s.get(.c) == {},
+    });
 }

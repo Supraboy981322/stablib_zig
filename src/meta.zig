@@ -28,7 +28,7 @@ pub fn MinInt(comptime v:comptime_int) type {
     const foo:u64 = if (v >= 0) @max(v, 1) else @max(-v - 1, -v);
     const bits = 64 - @clz(foo);
     return
-        if (comptime module.zig_version != .lt)
+        if (builtin.zig_version != .lt)
             @Int(.unsigned, bits)
         else
             @compileError("don't blame me for Zig removing builtins and leaving no way to easily use the conditionally");
@@ -106,7 +106,7 @@ pub fn FieldEnum(comptime T:type) type {
         const I = MinInt(names.len);
         var back = [_]I{undefined} ** names.len;
         for (0..names.len) |i| back[i] = @intCast(i);
-        if (module.zig_version != .lt)
+        if (builtin.zig_version != .lt)
             return @Enum(I, .exhaustive, names, back)
         else
             @compileError("don't blame me for Zig removing builtins and leaving no way to easily use the conditionally");

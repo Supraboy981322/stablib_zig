@@ -35,10 +35,6 @@ pub const todo = general.todo;
 pub const assert = general.assert;
 pub const comptimeAssert = general.comptimeAssert;
 
-pub const zig_version = @import("builtin").zig_version.order(.{
-    .major = 0, .minor = 16, .patch = 0
-});
-
 pub const Error = _error.Error;
 
 test "general" {

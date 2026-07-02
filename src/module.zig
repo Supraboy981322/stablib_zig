@@ -14,6 +14,10 @@ test "setup()" {
     try testing.expect(global_io != null);
 }
 
+pub const meetsMinimumVersion = _setup.meetsMinimumVersion;
+pub const assertMinimumVersion = _setup.assertMinimumVersion;
+
+
 pub const setup = _setup.do;
 pub const SetupErr = _setup.Error;
 pub const assertSetup = _setup.assertOk;

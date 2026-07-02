@@ -37,7 +37,7 @@ pub const strict = struct {
                 if (@TypeOf(two) == type) two else @TypeOf(two),
             };
             const o, const t = .{ @typeInfo(T1), @typeInfo(T2) };
-            comptimeAssert(o == .@"enum" and t == .@"enum");
+            comptimeAssert(o == .@"enum" and t == .@"enum", "not enum");
             const e1, const e2 = .{ o.@"enum", t.@"enum" };
             return allTrue(&.{
                 e1.tag_type == e2.tag_type,

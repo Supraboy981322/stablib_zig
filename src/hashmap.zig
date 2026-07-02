@@ -9,6 +9,9 @@ const mem = module.mem;
 
 const allocator = module.alloc;
 const alloc = allocator.interface;
+const todo = module.todo;
+const expectMany = module.testing.expectMany;
+const expectError = module.testing.expectError;
 
 pub fn HashMap(comptime Key:type, comptime Val:type) type {
     _ = .{ Key, Val };
@@ -60,21 +63,21 @@ pub fn HashMap(comptime Key:type, comptime Val:type) type {
                 //return;
             }
             if (self.contains(k)) return error.Clobber;
-            @compileError("TODO: HashMap.putClobber()");
+            todo("HashMap.putClobber()", .compiling);
         }
 
         pub fn get(self:*Self, k:Key, comptime opts:GetOpts) ?opts.RetType() {
             _ = .{ self };
             const key = self.hash(k);
             _ = key;
-            @compileError("TODO: HashMap.get()");
+            todo("HashMap.get()", .compiling);
         }
 
         pub fn contains(self:*Self, k:Key) bool {
             _ = .{ self };
             const idx = self.hash(k);
             _ = idx;
-            @compileError("TODO: HashMap.contains()");
+            todo("HashMap.contains()", .compiling);
         }
 
         pub fn getOrPut(self:*Self, k:Key, put_v:Val, comptime opts:GetOpts) ?opts.RetType() {
@@ -89,23 +92,23 @@ pub fn HashMap(comptime Key:type, comptime Val:type) type {
             _ = .{ self };
             const idx = self.hash(k);
             _ = idx;
-            @compileError("TODO: HashMap.getOrPutPtr()");
+            todo("HashMap.getOrPutPtr()", .compiling);
         }
         
         pub fn dupe(self:*Self, k:Key, opts:DupeOpts) allocator.Error!Self {
             _ = .{ self, k, opts };
-            @compileError("TODO: HashMap.dupe()");
+            todo("HashMap.dupe()", .compiling);
         }
 
         pub fn rehash(self:*Self) void {
             _ = self;
-            @compileError("TODO: HashMap.rehash()");
+            todo("HashMap.rehash()", .compiling);
         }
         pub fn hash(self:*Self, k:Key) usize {
             _ = .{ self, k };
             //var res = self.hash_num;
             //return res;
-            @compileError("TODO: HashMap.hash()");
+            todo("HashMap.hash()", .compiling);
         }
     };
 }
@@ -267,4 +270,27 @@ pub fn EnumMap(comptime Enum:type, comptime Val:type) type {
             unreachable;
         }
     };
+}
+
+test "EnumMap(...)" {
+    const Foo = enum { a, b, c, d, e, f, g };
+    var map:module.types.hashmap.EnumMap(Foo, u8) = try .init();
+    defer map.deinit();
+
+    //basic
+    try map.put(.a, 102, .{ .no_clobber = true });
+    try map.put(.b, 103, .{ .no_clobber = true });
+    try expectMany(&.{
+        map.get(.a, .{}).? == 102,
+        map.get(.a, .{ .ptr = true }).?.* == try map.get(.a, .{ .err_if_missing = true }),
+
+        map.get(.b, .{}).? == 103,
+        map.get(.b, .{ .ptr = true }).?.* == try map.get(.b, .{ .err_if_missing = true }),
+
+        map.get(.c, .{}) == null,
+    });
+
+    //errors
+    try expectError(error.Missing, map.get(.c, .{ .err_if_missing = true }));
+    _ = try map.get(.a, .{ .err_if_missing = true });
 }

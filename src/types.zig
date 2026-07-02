@@ -7,6 +7,7 @@ const comptimeAssert = general.comptimeAssert;
 const comptimeAssertMany = general.comptimeAssertMany;
 const expect = module.testing.expect;
 const activeTag = meta.activeTag;
+const expectError = module.testing.expectError;
 
 pub const builtin = struct {
     pub const Type = @TypeOf(@typeInfo(u8));
@@ -24,7 +25,7 @@ pub const compare = @import("type_comparison.zig");
 
 pub const iterators = @import("iterators.zig");
 
-pub const Futex = @import("futex.zig").Futex;
+pub const futex = @import("futex.zig").futex;
 
 pub const SetupStatus = enum(u1) {
     ok,
@@ -56,38 +57,35 @@ pub const atomic = struct {
         const std = @import("std");
         const Real = std.builtin.AtomicOrder;
         comptimeAssert(
-            compare.strict.enumerations(Real, AtomicOrder)
+            compare.strict.enumerations(Real, AtomicOrder),
+            "Zig std.builtin.AtomicOrder changed; update here",
         );
     }
 
     pub const Mutex = struct {
-        state:atomic.Value(Lock) = .init(.unlocked, null),
+        state:atomic.Value(u32, null) = .init(unlocked),
 
         // TODO: can this even be an enum?
-        const Lock = enum(u32) {
-            unlocked = 0b00,
-            locked = 0b01,
-            contended = 0b11,
-        };
-
-        pub const init:Mutex = .{ .thing = .init(false, null) };
+        const unlocked:u32 = 0b00;
+        const locked:u32 = 0b01;
+        const contended:u32 = 0b11;
 
         pub fn lock(self:*Mutex) void {
-            if (self.state.get() == .contended)
-                Futex.wait(&self.state, .contended);
-            while (self.state.swap(.contended, .acquire) != .unlocked)
-                Futex.wait(&self.state, .contended);
+            self.lockTimeout(null) catch unreachable;
         }
         pub fn unlock(self:*Mutex) void {
-            const state = self.state.swap(.unlocked, .release);
-            assert(state != .unlocked);
-            if (state == .contended) Futex.wake(&self.state, 1);
+            const state = self.state.swap(unlocked, .release);
+            assert(state != unlocked, "mutex already unlocked");
+            if (state == contended) _ = futex.wake(&self.state, 1);
+        }
+        //timeout in ns, null for no timeout
+        pub fn lockTimeout(self:*Mutex, timeout:?u64) error{Timeout}!void {
+            if (self.state.get(.monotonic) == contended)
+                _ = try futex.wait(&self.state, contended, timeout);
+            while (self.state.swap(contended, .acquire) != unlocked)
+                _ = try futex.wait(&self.state, contended, timeout);
         }
 
-        test "atomic.Mutex" {
-            const mut:Mutex = .init;
-            mut.lock();
-        }
     };
     pub fn Value(comptime T:type, comptime atomic_order:?AtomicOrder) type {
         return extern struct {
@@ -101,18 +99,36 @@ pub const atomic = struct {
 
             pub const Order = if (atomic_order) |_| void else AtomicOrder;
 
-            pub fn set(self:*Self, value:T, order:Order) void {
+            pub fn set(self:*Self, value:T, comptime order:Order) void {
                 const o = if (atomic_order) |o| o else order;
                 @atomicStore(T, &self.raw, value, @enumFromInt(@intFromEnum(o)));
             }
-            pub fn get(self:*Self, order:Order) T {
+            pub fn get(self:*Self, comptime order:Order) T {
                 const o = if (atomic_order) |o| o else order;
                 return @atomicLoad(T, &self.raw, @enumFromInt(@intFromEnum(o)));
             }
-            pub fn swap(self:*Self, op:T, order:Order) T {
+            pub fn swap(self:*Self, op:T, comptime order:Order) T {
                 const o = if (atomic_order) |o| o else order;
                 return @atomicRmw(T, &self.raw, .Xchg, op, @enumFromInt(@intFromEnum(o)));
             }
         };
     }
+    test "Mutex ; Value" {
+        var mut:Mutex = .{};
+        mut.lock();
+        try expectError(error.Timeout, mut.lockTimeout(100));
+        mut.unlock();
+        try mut.lockTimeout(100);
+    }
 };
+
+test "imports" {
+    _ = atomic;
+    _ = hashmap;
+    _ = @import("DynamicArray.zig");
+    _ = @import("error.zig");
+    _ = iterators;
+    _ = compare;
+    _ = @import("futex.zig");
+    _ = futex;
+}

@@ -56,7 +56,7 @@ fn internal_alloc(
     alignment:Alignment,
     ret_addr:usize
 ) ?[*]u8 {
-    if (module.io) |io| {
+    if (module.global_io) |io| {
         mutex.lock(io) catch return null;
         defer mutex.unlock(io);
         return back.rawAlloc(len, alignment, ret_addr);
@@ -71,7 +71,7 @@ fn internal_resize(
     new_len:usize,
     ret_addr:usize
 ) bool {
-    if (module.io) |io| {
+    if (module.global_io) |io| {
         mutex.lock(io) catch return true; // TODO: probably should handle this
         defer mutex.unlock(io);
         return back.rawResize(memory, alignment, new_len, ret_addr);
@@ -85,7 +85,7 @@ fn internal_free(
     alignment:Alignment,
     ret_addr:usize
 ) void {
-    if (module.io) |io| {
+    if (module.global_io) |io| {
         mutex.lock(io) catch return; // TODO: probably should handle this
         defer mutex.unlock(io);
         return back.rawFree(memory, alignment, ret_addr);
@@ -100,7 +100,7 @@ fn internal_remap(
     new_len:usize,
     ret_addr:usize
 ) ?[*]u8 {
-    if (module.io) |io| {
+    if (module.global_io) |io| {
         mutex.lock(io) catch return null;
         defer mutex.unlock(io);
         return back.rawRemap(memory, alignment, new_len, ret_addr);

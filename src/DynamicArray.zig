@@ -1,7 +1,15 @@
 const module = @import("module.zig");
 const alloc = module.alloc.interface; // TODO: replace with wrapper
+
 const general = module.general;
+const testing = module.testing;
+const mem = module.mem;
+
+const expect = testing.expect;
 const assert = general.assert;
+const assertSetup = module.assertSetup;
+const expectEqlSlices = testing.expectEqlSlices;
+const expectManyEqlSlices = testing.expectManyEqlSlices;
 
 pub fn DynamicArray(comptime T:type) type {
     return struct {
@@ -77,4 +85,32 @@ pub fn DynamicArray(comptime T:type) type {
             return self.slice[0..self.len];
         }
     };
+}
+
+test "DynamicArray(...)" {
+    assertSetup();
+
+    var buf:DynamicArray(u8) = try .init(0, .{ .growth_multiplier = 2 });
+    defer buf.deinit();
+
+    try expect(buf.pop() == null);
+
+    try buf.append('a');
+    try buf.appendSlice("foo");
+
+    const str_1 = buf.string();
+    const str_2 = buf.string();
+    try expectManyEqlSlices(u8, &.{ str_1, str_2, "afoo", });
+
+    try expectEqlSlices(
+        u8,
+        "afoo",
+        mem.reverse(u8, &.{
+            buf.pop().?,
+            buf.pop().?,
+            buf.pop().?,
+            buf.pop().?,
+        })
+    );
+    try expect(buf.pop() == null);
 }

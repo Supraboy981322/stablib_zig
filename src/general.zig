@@ -20,3 +20,13 @@ pub fn comptimeAssertMany(conditions:[]const bool, comptime msg:[]const u8) void
 pub fn allTrue(conditions:[]const bool) bool {
     return mem.allEqlTo(bool, conditions, true);
 }
+
+
+
+pub fn todo(comptime msg:[]const u8, comptime when:enum{ running, compiling }) noreturn {
+    const txt = "TODO (" ++ @tagName(when) ++ "): " ++ msg;
+    switch (comptime when) {
+        .running => @panic(txt),
+        .compiling => @compileError(txt),
+    }
+}

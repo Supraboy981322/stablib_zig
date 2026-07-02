@@ -1,12 +1,36 @@
 const module = @import("module.zig");
 const general = module.general;
 const types = module.types;
+const testing = module.testing;
 
-const Matrix = types.Matrix;
-
+const assertSetup = module.assertSetup;
+const expectEqlSlices = testing.expectEqlSlices;
 const assert = general.assert;
 const comptimeAssert = general.comptimeAssert;
 
+const Matrix = types.Matrix;
+
+// TODO:
+//  - probably could put more here
+pub const Where = enum {
+    stack,
+    alloc,
+};
+
+pub const Sentinel = enum(u8) {
+    nul = 0,
+    _,
+    pub fn num(comptime n:u8) Sentinel {
+        return @enumFromInt(n);
+    }
+    pub fn byte(self:Sentinel) u8 {
+        return @intFromEnum(self);
+    }
+};
+
+
+
+//equality
 pub fn eql(comptime T:type, one:[]const T, two:[]const T) bool {
     if (one.len != two.len) return false;
     for (0..one.len) |i| if (one[i] != two[i]) return false;
@@ -33,6 +57,8 @@ pub fn allEqlTo(comptime T:type, slice:[]const T, to:T) bool {
     return true;
 }
 
+
+
 pub fn absorbTerminator(slice:anytype) blk: {
     const T:type = @TypeOf(slice);
     const i = @typeInfo(T);
@@ -54,6 +80,8 @@ pub fn absorbTerminator(slice:anytype) blk: {
             slice.ptr[0..slice.len+1];
 }
 
+
+
 pub fn reverseInPlace(comptime T:type, slice:[]T) void {
     var offset:usize = slice.len;
     for (0..slice.len/2) |i| {
@@ -71,4 +99,13 @@ pub fn swap(comptime T:type, one:*T, two:*T) void {
     const tmp = one.*;
     one.* = two.*;
     two.* = tmp;
+}
+
+test "mem.swap(...) ; mem.reverse(...) ; mem.reverseInPlace(...)" {
+    assertSetup();
+
+    const str = "foo bar baz";
+    const reversed = reverse(u8, str);
+    try expectEqlSlices(u8, reversed, "zab rab oof");
+    try expectEqlSlices(u8, str, "foo bar baz");
 }

@@ -29,10 +29,15 @@ pub const alloc = @import("alloc.zig");
 pub const fmt = @import("fmt.zig");
 pub const io = @import("io.zig");
 pub const sys = @import("sys.zig");
+pub const text = @import("text/module.zig");
 
 pub const todo = general.todo;
 pub const assert = general.assert;
 pub const comptimeAssert = general.comptimeAssert;
+
+pub const zig_version = @import("builtin").zig_version.order(.{
+    .major = 0, .minor = 16, .patch = 0
+});
 
 pub const Error = _error.Error;
 
@@ -47,4 +52,5 @@ test "general" {
     _ = alloc;
     _ = fmt;
     _ = io;
+    _ = text;
 }

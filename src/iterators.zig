@@ -88,4 +88,7 @@ pub fn ByteIterator(comptime type_opts:ByteOpts) type {
     };
 }
 
-// TODO: arg parser
+// TODO:
+//  - arg parser
+//  - wrapper over arg parser with iterator
+

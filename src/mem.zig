@@ -32,18 +32,30 @@ pub const Sentinel = enum(u8) {
 
 
 
-//equality
+//checks if two slices are equal
+//  eg: for two strings, both strings are equal
+//    true: eql(u8, "foo", "foo")
+//    false: eql(u8, "foo", "bar")
 pub fn eql(comptime T:type, one:[]const T, two:[]const T) bool {
     if (one.len != two.len) return false;
     for (0..one.len) |i| if (one[i] != two[i]) return false;
     return true;
 }
+//checks if every row in one matrix has the same values;
+//  eg: in a slice of strings, every string is equal
+//    true: manyEql(u8, &.{ "foo", "foo", "foo" })
+//    false: manyEql(u8, &.{ "foo", "bar", "baz" })
 pub fn manyEql(comptime T:type, slices:Matrix(T)) bool {
     if (slices.len >= 2)
         for (slices[1..]) |s|
             if (!eql(T, s, slices[0])) return false;
     return true;
 }
+//checks if each row in two matrices are equal; as oppossed to
+//  every row in one matrix having the same values
+//    eg: two slices of integer sequences have the same sequences at the same index
+//      true: eqlMatrices(u8, &.{ "foo", "bar", "baz" }, &.{ "foo", "bar", "baz" })
+//      false: eqlMatrices(u8, &.{ "baz", "bar", "foo" }, &.{ "foo", "bar", "baz" })
 pub fn eqlMatrices(comptime T:type, one:Matrix(T), two:Matrix(T)) bool {
     if (one.len != two.len) return false;
     for (0..one.len) |r|

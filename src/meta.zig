@@ -91,6 +91,30 @@ pub fn fieldNames(comptime T:type) [fieldCount(T)][]const u8 {
         break :blk res;
     };
 }
+pub fn enumInts(comptime T:type) [fieldCount(T)]Tag(T) {
+    return comptime blk: {
+        const count = fieldCount(T);
+        const set = fields(T);
+        var res = [_]Tag(T){undefined} ** count;
+        for (0..set.len) |i| res[i] = set[i].value;
+        break :blk res;
+    };
+}
+pub fn FieldEnum(comptime T:type) type {
+    comptime {
+        const names = fieldNames(T);
+        const I = MinInt(names.len);
+        var back = [_]I{undefined} ** names.len;
+        for (0..names.len) |i| back[i] = @intCast(i);
+        if (module.zig_version != .lt)
+            return @Enum(I, .exhaustive, names, back)
+        else
+            @compileError("don't blame me for Zig removing builtins and leaving no way to easily use the conditionally");
+    }
+}
+pub fn FieldIndexType(comptime T:type, idx:usize) type {
+    return fields(T)[idx].type;
+}
 
 test "fieldNames(), fields(), FieldType(), and fieldCount()" {
     const Foo = union(enum) {

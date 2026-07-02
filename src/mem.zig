@@ -44,6 +44,12 @@ pub fn manyEql(comptime T:type, slices:Matrix(T)) bool {
             if (!eql(T, s, slices[0])) return false;
     return true;
 }
+pub fn eqlMatrices(comptime T:type, one:Matrix(T), two:Matrix(T)) bool {
+    if (one.len != two.len) return false;
+    for (0..one.len) |r|
+        if (!eql(T, one[r], two[r])) return false;
+    return true;
+}
 
 //all values in a slice are the same
 //(as opposed to two slices being equal to each other)

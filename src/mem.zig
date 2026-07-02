@@ -2,7 +2,9 @@ const module = @import("module.zig");
 const general = module.general;
 const types = module.types;
 const testing = module.testing;
+const meta = module.meta;
 
+const expect = testing.expect;
 const assertSetup = module.assertSetup;
 const expectEqlSlices = testing.expectEqlSlices;
 const assert = general.assert;
@@ -55,6 +57,29 @@ pub fn allEql(comptime T:type, slice:[]const T) bool {
 pub fn allEqlTo(comptime T:type, slice:[]const T, to:T) bool {
     for (slice) |v| if (v != to) return false;
     return true;
+}
+test "allEql(...) > allEqlTo(...)" {
+    assertSetup();
+
+    var str  = [_]u8{'a'} ** 1024;
+    try expect(allEql(u8, &str));
+    for (0..str.len) |i| {
+        var s = str;
+        s[i] = 'f';
+        try expect(!allEql(u8, &s));
+    }
+}
+
+pub inline fn contains(comptime T:type, slice:[]const T, b:u8) bool {
+    return for (slice) |c| {
+        if (c == b) break true;
+    } else false;
+}
+test "contains(...)" {
+    assertSetup();
+
+    try expect(contains(u8, "qwertz", 'r'));
+    try expect(!contains(usize, &.{ 0, 98_234, 256, 0o654 }, 3));
 }
 
 

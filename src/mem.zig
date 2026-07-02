@@ -90,6 +90,17 @@ test "contains(...)" {
 
 
 
+pub fn mkRange(comptime T:type, len:T, skip:?T, buf:[]T) []const T {
+    for (0..len) |i| {
+        if (skip) |s|
+            if (@mod(i, s) == 0) continue;
+        buf[i] = i;
+    }
+    return buf;
+}
+
+
+
 pub fn absorbTerminator(slice:anytype) blk: {
     const T:type = @TypeOf(slice);
     const i = @typeInfo(T);

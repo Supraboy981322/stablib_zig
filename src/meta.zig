@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const module = @import("module.zig");
 const types = module.types;
 const testing = module.testing;
@@ -19,6 +20,18 @@ test "stringToEnum" {
     const Foo = enum{ bar, baz };
     const e = stringToEnum(Foo, "baz");
     try expect(e == .baz);
+}
+
+
+
+pub fn MinInt(comptime v:comptime_int) type {
+    const foo:u64 = if (v >= 0) @max(v, 1) else @max(-v - 1, -v);
+    const bits = 64 - @clz(foo);
+    return
+        if (comptime module.zig_version != .lt)
+            @Int(.unsigned, bits)
+        else
+            @compileError("don't blame me for Zig removing builtins and leaving no way to easily use the conditionally");
 }
 
 

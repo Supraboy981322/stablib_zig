@@ -159,6 +159,38 @@ test LazyEnum {
     });
 }
 
+// TODO:
+//  - evalBranchQuota
+//pub fn IntEnum(comptime max:anytype) type {
+//    var names = [_][]const u8{undefined} ** max;
+//    for (0..max) |num| names[num] = &mem.toBytes(num);
+//    const Back = MinInt(max);
+//    var buf = [_]Back{undefined} ** max;
+//    return @Enum(
+//        Back,
+//        .exhaustive,
+//        names,
+//        mem.mkRange(Back, max, null, &buf)[0..max]
+//    );
+//}
+//test IntEnum {
+//    const T = IntEnum(maxInt(u8));
+//    const names = fieldNames(T);
+//    for (names, 0..) |tag, i|try expectMany(&.{ tag.len == 1, tag[0] == i });
+//}
+
+
+
+pub fn anyToInt(comptime T:type, v:anytype) T {
+    return switch (@typeInfo(v)) {
+        .@"enum" => @intFromEnum(v),
+        .int => v,
+        .@"float" => @intFromFloat(v),
+        .@"pointer" => @intFromPtr(v),
+        else => |t| @compileError("cannot create an int from " ++ @tagName(t)),
+    };
+}
+
 
 
 pub fn Structure(comptime T:type) type {

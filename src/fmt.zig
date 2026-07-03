@@ -41,3 +41,14 @@ pub fn parseInt(comptime T:type, str:[]const u8) !T {
     }
     return res;
 }
+
+
+
+pub fn intLengthInDigits(num:anytype) @TypeOf(num) {
+    const T = @TypeOf(num);
+    if (num == 0) return 1;
+    var n:T = num;
+    var i:usize = 0;
+    while (n > 0) : (i += 1) n /= 10;
+    return i;
+}

@@ -2,9 +2,11 @@ const module = @import("module.zig");
 const mem = module.mem;
 const types = module.types;
 
-// TODO:
-//  - print (see... somewhere it's around here, I have full notes on it somewhere)
-const print = @import("std").debug.print;
+const io = module.io;
+
+fn print(comptime msg:[]const u8, args:anytype) void {
+    io.print(.err, msg, args) catch {};
+}
 
 const Matrix = types.Matrix;
 
@@ -12,7 +14,10 @@ pub inline fn expect(passed:bool) !void {
     if (!passed) return error.TestFailed;
 }
 pub fn expectMany(pass_conditions:[]const bool) !void {
-    for (pass_conditions) |success| try expect(success);
+    for (pass_conditions, 0..) |success, i| expect(success) catch |e| {
+        print("condition #{d} failed\n",.{i});
+        return e;
+    };
 }
 
 pub fn expectEqlSlices(comptime T:type, one:[]const T, two:[]const T) !void {

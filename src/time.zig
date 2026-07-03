@@ -1,4 +1,8 @@
-//ripped straight from std.time
+const module = @import("module.zig");
+
+const comptimeAssert = module.general.comptimeAssert;
+const maxInt = module.math.maxInt;
+const Tag = module.meta.Tag;
 
 pub const ns_per_us = 1000;
 pub const ns_per_ms = 1000 * ns_per_us;
@@ -25,3 +29,19 @@ pub const s_per_min = 60;
 pub const s_per_hour = s_per_min * 60;
 pub const s_per_day = s_per_hour * 24;
 pub const s_per_week = s_per_day * 7;
+
+pub const Measurement = enum {
+    week,
+    day,
+    hour,
+    min,
+    sec,
+    ms,
+    us,
+    ns,
+};
+
+pub fn sec(n:anytype) @TypeOf(n) {
+    comptimeAssert(@typeInfo(n) == .int, "value must be an integer");
+    return ms_per_s * n;
+}

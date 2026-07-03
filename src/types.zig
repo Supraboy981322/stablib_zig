@@ -86,6 +86,18 @@ pub const atomic = struct {
                 _ = try futex.wait(&self.state, contended, timeout);
         }
 
+        pub fn isLocked(self:*Mutex) bool {
+            self.lockTimeout(1) catch return true;
+            self.unlock();
+            return false;
+        }
+        test "isLocked" {
+            var mut:Mutex = .{};
+            try expect(!mut.isLocked());
+            mut.lock();
+            try expect(mut.isLocked());
+            mut.unlock();
+        }
     };
     pub fn Value(comptime T:type, comptime atomic_order:?AtomicOrder) type {
         return extern struct {

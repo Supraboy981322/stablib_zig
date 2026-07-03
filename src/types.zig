@@ -14,8 +14,8 @@ pub const builtin = struct {
     pub const TypeEnum = meta.Tag(Type);
 };
 
-pub const hashmap = @import("hashmap.zig");
-pub const HashMap = hashmap.HashMap;
+pub const hashmap = @import("hashmap/module.zig");
+pub const HashMap = hashmap.Standard;
 
 pub const DynamicArray = @import("DynamicArray.zig").DynamicArray;
 

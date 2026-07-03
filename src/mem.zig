@@ -163,3 +163,25 @@ test "mem.swap(...) ; mem.reverse(...) ; mem.reverseInPlace(...)" {
     try expectEqlSlices(u8, reversed, "zab rab oof");
     try expectEqlSlices(u8, str, "foo bar baz");
 }
+
+
+
+pub fn AsBytesRet(comptime Ptr:type) type {
+    const ptr = @typeInfo(Ptr).pointer;
+    comptimeAssert(ptr.size == .one, "cannot be multi-item pointer");
+    const size = @sizeOf(ptr.child);
+    return @Pointer(.one, .{
+        .@"const" = ptr.is_const,
+        .@"volatile" = ptr.is_volatile,
+        .@"allowzero" = ptr.is_allowzero,
+        .@"align" = ptr.alignment orelse
+            if (@alignOf([size]u8) == @alignOf(ptr.child)) null else @alignOf(ptr.child),
+        .@"addrspace" = ptr.address_space,
+    }, [size]u8, null);
+}
+pub fn asBytes(ptr:anytype) AsBytesRet(@TypeOf(ptr)) {
+    return @ptrCast(@alignCast(ptr));
+}
+pub fn toBytes(val:anytype) [@sizeOf(@TypeOf(val))]u8 {
+    return asBytes(&val).*;
+}

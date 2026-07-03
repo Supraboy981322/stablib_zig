@@ -34,6 +34,7 @@ pub const fmt = @import("fmt.zig");
 pub const io = @import("io.zig");
 pub const sys = @import("sys.zig");
 pub const text = @import("text/module.zig");
+pub const math = @import("math.zig");
 
 pub const todo = general.todo;
 pub const assert = general.assert;
@@ -53,4 +54,7 @@ test "general" {
     _ = fmt;
     _ = io;
     _ = text;
+    _ = sys;
+    _ = time;
+    _ = math;
 }

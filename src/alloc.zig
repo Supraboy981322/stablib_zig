@@ -11,10 +11,8 @@ const general = module.general;
 //   - std.heap.page_allocator is (for now) being used as a backing allocator
 //      - the std.mem.Allocator interface is (clearly) located in the stdlib
 //      - std.mem.Allocator.Alignment is required for the stdlib interface
-//   - std.Io is required to use a std.Io.Mutex
 // TODO: replacing stdlib
 //   - the std.mem.Allocator interface is likely never going to be removed (it's used too much in stdlib)
-//   - std.Io.Mutex replacement is pending
 
 const std = @import("std");
 const Allocator = std.mem.Allocator;
@@ -33,7 +31,7 @@ const back =
         std.testing.allocator //I don't plan on implementing a debug/testing allocator anytime soon
     else
         std.heap.allocator;   //may have to replace this in some way
-var mutex:std.Io.Mutex = .init;
+var mutex:module.types.atomic.Mutex = .{};
 
 pub const interface:Allocator = .{
     .ptr = undefined,
@@ -56,12 +54,9 @@ fn internal_alloc(
     alignment:Alignment,
     ret_addr:usize
 ) ?[*]u8 {
-    if (module.global_io) |io| {
-        mutex.lock(io) catch return null;
-        defer mutex.unlock(io);
-        return back.rawAlloc(len, alignment, ret_addr);
-    } else
-        @panic("allocator was never setup (call global setup function)");
+    mutex.lock();
+    defer mutex.unlock();
+    return back.rawAlloc(len, alignment, ret_addr);
 }
 
 fn internal_resize(
@@ -71,12 +66,9 @@ fn internal_resize(
     new_len:usize,
     ret_addr:usize
 ) bool {
-    if (module.global_io) |io| {
-        mutex.lock(io) catch return true; // TODO: probably should handle this
-        defer mutex.unlock(io);
-        return back.rawResize(memory, alignment, new_len, ret_addr);
-    } else
-        @panic("allocator was never setup (call global setup function)");
+    mutex.lock();
+    defer mutex.unlock();
+    return back.rawResize(memory, alignment, new_len, ret_addr);
 }
 
 fn internal_free(
@@ -85,12 +77,9 @@ fn internal_free(
     alignment:Alignment,
     ret_addr:usize
 ) void {
-    if (module.global_io) |io| {
-        mutex.lock(io) catch return; // TODO: probably should handle this
-        defer mutex.unlock(io);
-        return back.rawFree(memory, alignment, ret_addr);
-    } else
-        @panic("allocator was never setup (call global setup function)");
+    mutex.lock();
+    defer mutex.unlock();
+    return back.rawFree(memory, alignment, ret_addr);
 }
 
 fn internal_remap(
@@ -100,12 +89,9 @@ fn internal_remap(
     new_len:usize,
     ret_addr:usize
 ) ?[*]u8 {
-    if (module.global_io) |io| {
-        mutex.lock(io) catch return null;
-        defer mutex.unlock(io);
-        return back.rawRemap(memory, alignment, new_len, ret_addr);
-    } else
-        @panic("allocator was never setup (call global setup function)");
+    mutex.lock();
+    defer mutex.unlock();
+    return back.rawRemap(memory, alignment, new_len, ret_addr);
 }
 
 // TODO: alloc wrapper for non-bytes

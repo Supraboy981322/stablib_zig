@@ -62,15 +62,13 @@ pub const posix = switch (builtin.target.os.tag) {
             while (written < msg.len) {
                 const n = try write(fd, msg[written..]);
                 written += n;
-                @import("std").debug.print("wrote: {d} (total:{d})\n", .{n, written});
             }
-            try fsync(fd);
         }
         pub fn write(fd:fd_t, msg:[]const u8) !usize {
             while (true) {
                 return writeRaw(fd, @constCast(msg.ptr), msg.len) catch |e| {
                     if (e == error.Interrupted) continue;
-                    return e;
+                    return e; //write failed
                 };
             }
         }
@@ -131,9 +129,10 @@ pub const posix = switch (builtin.target.os.tag) {
         }
 
 
-        pub fn open(path:[]const u8, flags:O, perm:mode_t) !void {
-            const p = try toPosixPath(path);
-            return try openRaw(p, flags, perm);
+        // TODO: construct mode_t
+        pub fn open(path:[]const u8, flags:O, perm:mode_t) !fd_t {
+            var p = try toPosixPath(path);
+            return openRaw(p[0..p.len].ptr, flags, perm);
         }
         pub fn openRaw(path:[*:0]const u8, flags:O, perm:mode_t) !fd_t {
             while (true) {
@@ -191,6 +190,16 @@ pub const posix = switch (builtin.target.os.tag) {
         }
 
 
+        pub fn unlink(path:[]const u8) !void {
+            const p = try toPosixPath(path);
+            return unlinkRaw(&p);
+        }
+        pub fn unlinkRaw(path:[*:0]const u8) !void {
+            const rc = linux.unlink(path);
+            if (zigSysErr(rc)) |err| return err;
+        }
+
+
         pub inline fn syscallOk(rc:usize) bool {
             return errno(rc) == .SUCCESS;
         }
@@ -233,19 +242,46 @@ pub const posix = switch (builtin.target.os.tag) {
         }
 
 
-
-        test "mkMemFd | print > write | read > readN > readRaw" {
-            const txt = "foo";
-            const fd = try mkMemFd(txt, 0);
-            defer close(fd);
-            try print(.fd(fd), txt);
+        fn testFileFd(fd:fd_t, name:[]const u8, txt:[]const u8, remove:bool) !void {
+            var status:packed struct(u2){
+                removed:bool = false,
+                closed:bool = false,
+            } = .{};
+            defer {
+                if (!status.closed) close(fd);
+                if (!status.removed and remove) unlink(name) catch {};
+            }
+            //_ = txt;
+            try writeAll(fd, txt);
+            try fsync(fd);
             try lseek(fd, 0, .start);
             var buf:[1024]u8 = undefined;
             const n = try read(fd, &buf, txt.len);
             try expect(n == txt.len);
             try expectEqlSlices(u8, buf[0..n], txt);
+
+            close(fd);
+            status.closed = true;
+
+            if (remove) try unlink(name);
+            status.removed = true;
         }
 
+        test "memfd" {
+            const name = "memfd_test";
+            const fd = try mkMemFd(name, 0);
+            try testFileFd(fd, name, "foo", false);
+        }
+        
+        test "open" {
+            const name = "open_test";
+            const fd = try open("open_test", .{
+                .CREAT = true,
+                .TRUNC = true,
+                .ACCMODE = .RDWR,
+            }, 0o666);
+            try testFileFd(fd, name, "foo", true);
+        }
 
 
         pub fn zigError(e:linux.E) ?anyerror {

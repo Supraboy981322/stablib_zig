@@ -9,12 +9,9 @@ const expect = testing.expect;
 const expectMany = testing.expectMany;
 const expectEqualMatrices = testing.expectEqlMatrices;
 const expectEqualSlices = testing.expectEqlSlices;
-
-
+const maxInt = module.math.maxInt;
 
 const Module = @This();
-
-
 
 //misc
 pub fn stringToEnum(comptime T:type, name:[]const u8) ?T {
@@ -134,7 +131,7 @@ test "fieldNames(), fields(), FieldType(), and fieldCount()" {
 
 
 
-pub fn EnumLazy(comptime field_names:[]const []const u8) type {
+pub fn LazyEnum(comptime field_names:[]const []const u8) type {
     const len = field_names.len;
     const Back = MinInt(len);
     var buf = [_]Back{undefined} ** len;
@@ -146,12 +143,12 @@ pub fn EnumLazy(comptime field_names:[]const []const u8) type {
     );
 }
 
-test EnumLazy {
+test LazyEnum {
     const BaseLine = enum(u2) { foo, bar, baz };
     const baseline = fieldNames(BaseLine);
 
     const names = &.{ "foo", "bar", "baz" };
-    const T = EnumLazy(names);
+    const T = LazyEnum(names);
     const resulting_names = fieldNames(T);
 
     try expectMany(&.{

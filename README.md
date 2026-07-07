@@ -11,7 +11,7 @@ Don't expect much from this; it's not intended to be a full replacement for Zig'
 - Anything which is likely to be shared is protected by an atomic
 - Intentionally simple
     - Some things use shared state (which's also protected by an atomic)
-- After this repo is set to public, nothing will ever be removed (I promise)
+- It is highly likely that nothing will ever be removed (I promise)
 - Any and all uses of Zig's stdlib are clearly marked, explained, and have information about replacement (via a comment at the top of the file using it)
     - Anything which does use something in Zig's stdlib that could break (or just be removed entirely) will likely get an implementation here in the future
     - It should be noted that if I feel that something is probably too load-bearing (for Zig's stdlib) to be removed, it may be used here significantly longer than it otherwise would

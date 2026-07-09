@@ -11,4 +11,6 @@ pub fn BasicBitStack(comptime size:usize) type {
 
 test "stacks" {
     _ = BasicStack;
+    _ = BasicBitStack;
+    _ = BasicByteStack;
 }

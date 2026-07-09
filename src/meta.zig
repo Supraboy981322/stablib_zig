@@ -193,6 +193,20 @@ pub fn anyToInt(comptime T:type, v:anytype) T {
 
 
 
+pub fn isFloat(comptime T:type) bool {
+    const info = @typeInfo(T);
+    return info == .float or info == .comptime_float;
+}
+pub fn isInt(comptime T:type) bool {
+    const info = @typeInfo(T);
+    return info == .int or info == .comptime_int;
+}
+pub fn typeIsNum(comptime T:type) bool {
+    return isInt(T) or isFloat(T);
+}
+
+
+
 pub fn Structure(comptime T:type) type {
     return struct {
         structure:T,

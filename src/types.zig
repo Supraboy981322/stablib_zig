@@ -21,11 +21,16 @@ pub const DynamicArray = @import("DynamicArray.zig").DynamicArray;
 
 const Error = @import("error.zig").Error;
 
+pub const NoError = error{};
+
 pub const compare = @import("type_comparison.zig");
 
 pub const iterators = @import("iterators.zig");
 
 pub const futex = @import("futex.zig").futex;
+
+pub const stacks = @import("stacks/module.zig");
+pub const conversion = @import("type_conversion.zig");
 
 pub const SetupStatus = enum(u1) {
     ok,
@@ -143,4 +148,6 @@ test "imports" {
     _ = compare;
     _ = @import("futex.zig");
     _ = futex;
+    _ = stacks;
+    _ = conversion;
 }
